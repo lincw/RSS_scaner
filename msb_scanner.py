@@ -11,6 +11,7 @@ import logging
 import sys
 import re
 from dateutil import parser
+import argparse
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -101,34 +102,47 @@ def create_markdown_report(articles):
     
     return markdown
 
-def save_report(content):
-    """Save the markdown report to a file."""
-    output_dir = Path("reports")
-    output_dir.mkdir(exist_ok=True)
-    
-    filename = f"msb_articles_{datetime.now().strftime('%Y%m%d')}.md"
-    output_path = output_dir / filename
+def save_report(content, output_path: Path):
+    """Save the markdown report to the specified file path."""
+    # Ensure the parent directory exists
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     
     try:
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(content)
         logger.info(f"Report saved successfully: {output_path}")
     except Exception as e:
-        logger.error(f"Error saving report: {str(e)}")
+        logger.error(f"Error saving report to {output_path}: {str(e)}")
 
 def main():
+    # --- Argument Parsing ---
+    parser = argparse.ArgumentParser(description="Scan MSB RSS feed and save articles to Markdown.")
+    parser.add_argument("-o", "--output", type=Path, 
+                        help="Path to save the output markdown file (including filename). Defaults to 'reports/msb_articles_YYYYMMDD.md'")
+    args = parser.parse_args()
+
+    # Determine output file path
+    if args.output:
+        output_file = args.output
+    else:
+        # Default output path
+        output_dir = Path("reports")
+        filename = f"msb_articles_{datetime.now().strftime('%Y%m%d')}.md"
+        output_file = output_dir / filename
+        
+    logger.info(f"Output will be saved to: {output_file}")
+    # ------------------------
+        
     try:
         logger.info("Starting MSB Article Scanner...")
         articles = fetch_msb_articles()
         
         if articles:
-            logger.info(f"Creating markdown report for {len(articles)} articles...")
-            report_content = create_markdown_report(articles)
-            
-            logger.info("Saving report...")
-            save_report(report_content)
+            markdown_report = create_markdown_report(articles)
+            save_report(markdown_report, output_file)
         else:
-            logger.error("No articles were fetched successfully")
+            logger.warning("No articles found or error fetching feed.")
+            
     except Exception as e:
         logger.error(f"Unexpected error in main: {str(e)}")
         sys.exit(1)
