@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file in Documents folder
-env_path = Path.home() / "OneDrive/Documents/.env"
+env_path = Path.home() / ".env"
 load_dotenv(env_path)
 
 class ArticleAnalyzer:
@@ -56,13 +56,15 @@ class ArticleAnalyzer:
                 authors_match = re.search(r'Authors:\s+(.+?)\n', section)
                 abstract_match = re.search(r'Abstract:\s+(.+?)(?=\n\n|$)', section, re.DOTALL)
                 doi_match = re.search(r'DOI:\s+\[(.+?)\]', section)
+                journal_match = re.search(r'Journal:\s+(.+?)\n', section)
                 
                 if title_match and abstract_match:
                     article = {
                         'title': title_match.group(1).strip(),
                         'authors': authors_match.group(1).strip() if authors_match else "Authors not available",
                         'abstract': abstract_match.group(1).strip(),
-                        'doi': doi_match.group(1) if doi_match else "DOI not available"
+                        'doi': doi_match.group(1) if doi_match else "DOI not available",
+                        'journal': journal_match.group(1).strip() if journal_match else None
                     }
                     articles.append(article)
             
@@ -74,11 +76,12 @@ class ArticleAnalyzer:
 
     def analyze_article(self, article: Dict) -> Dict:
         """Send article to Grok API for analysis."""
-        prompt = f"""Analyze this scientific article from Molecular Systems Biology and provide a preliminary evaluation:
+        journal = article.get('journal', 'this journal')
+        prompt = f"""Analyze this scientific article from {journal} and provide a preliminary evaluation:
 
 Title: {article['title']}
 Authors: {article['authors']}
-DOI: {article['doi']}
+DOI: {article.get('doi', article.get('doi_url', 'N/A'))}
 Abstract: {article['abstract']}
 
 Please provide a preliminary analysis covering:
@@ -106,6 +109,8 @@ Please provide a preliminary analysis covering:
 5. Relevance to Protein Interaction Network Analysis:
    - How might these findings inform or contribute to studies of protein-protein interactions?
    - Are there implications or insights that could be useful in network-based bioinformatics approaches?
+
+Including the references to support your analysis.
 
 Format the response as clear, well-structured Markdown using headings for each section (e.g., ## Core Research Question & Context).
 """
@@ -137,7 +142,7 @@ Format the response as clear, well-structured Markdown using headings for each s
                     
                     f.write(f"# Analysis for: {article['title']}\n\n")
                     f.write(f"**Authors:** {article['authors']}\n")
-                    f.write(f"**DOI:** [{article['doi']}](https://doi.org/{article['doi']})\n\n")
+                    f.write(f"**DOI:** [{article.get('doi', article.get('doi_url', 'N/A'))}](https://doi.org/{article.get('doi', article.get('doi_url', 'N/A'))})\n\n")
                     f.write("## Abstract\n")
                     f.write(f"{article['abstract']}\n\n")
                     f.write("## Grok Analysis\n")

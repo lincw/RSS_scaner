@@ -1,0 +1,45 @@
+{
+    "msb": {
+        "title": "title",
+        "authors": "authors",
+        "abstract": "abstract",
+        "link": "doi_url",
+        "published": "published_date"
+    },
+    "nature-comm": {
+        "title": "title",
+        "link": "link",
+        "authors": {
+            "target": "authors",
+            "join_with": ", ",
+            "extract": "name"
+        },
+        "abstract": {
+            "target": "content",
+            "extract": "fifth_value"
+        },
+        "dc_source": {
+            "target": "published_date",
+            "extract": "date_from_source"
+        }
+    },
+    "cell": {
+        "title": "title",
+        "link": "link",
+        "description": "abstract",
+        "authors": {
+            "target": "authors"
+        },
+        "identifier": "identifier",
+        "source": "source",
+        "date": "published_date",
+        "publicationName": "publicationName",
+        "publicationDate": "publicationDate",
+        "volume": "volume",
+        "number": "number",
+        "issueIdentifier": "issueIdentifier",
+        "section": "section",
+        "startingPage": "startingPage",
+        "endingPage": "endingPage"
+    }
+}
